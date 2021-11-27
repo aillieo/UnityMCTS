@@ -67,7 +67,7 @@ namespace AillieoUtils.GoBang
             }
 
             Player winner;
-        
+
             if (state.side == PlayerSide.Black)
             {
                 winner = players[PlayerSide.White];
@@ -84,20 +84,19 @@ namespace AillieoUtils.GoBang
         {
             Player curPlayer = players[current.side];
 
-            int index = await curPlayer.Play();
+            Task<int> playTask = curPlayer.Play();
 
-            BoardValue value;
-            if (current.side == PlayerSide.Black)
+            await Task.WhenAny(playTask, Task.Delay(5000));
+
+            if (!playTask.IsCompleted)
             {
-                value = BoardValue.Black;
-                current.side = PlayerSide.White;
-            }
-            else
-            {
-                value = BoardValue.White;
-                current.side = PlayerSide.Black;
+                throw new Exception();
             }
 
+            BoardValue value = PlayerSideToBoardValue(current.side);
+            current.side = Flip(current.side);
+
+            int index = await playTask;
             current.lastPlaced = index;
             current.boardState[index] = value;
 
@@ -163,6 +162,44 @@ namespace AillieoUtils.GoBang
             int x = index % dimension;
             int y = index / dimension;
             return new Vector2Int(x, y);
+        }
+
+        public static BoardValue PlayerSideToBoardValue(PlayerSide playerSide)
+        {
+            if (playerSide == PlayerSide.Black)
+            {
+                return BoardValue.Black;
+            }
+            else
+            {
+                return BoardValue.White;
+            }
+        }
+
+        public static PlayerSide BoardValueToPlayerSide(BoardValue boardValue)
+        {
+            if (boardValue == BoardValue.Black)
+            {
+                return PlayerSide.Black;
+            }
+            else if (boardValue == BoardValue.White)
+            {
+                return PlayerSide.White;
+            }
+
+            throw new Exception();
+        }
+
+        public static PlayerSide Flip(PlayerSide current)
+        {
+            if (current == PlayerSide.Black)
+            {
+                return PlayerSide.White;
+            }
+            else
+            {
+                return PlayerSide.Black;
+            }
         }
     }
 }

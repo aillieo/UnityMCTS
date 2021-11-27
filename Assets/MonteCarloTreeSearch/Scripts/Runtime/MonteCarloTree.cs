@@ -32,12 +32,29 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
         public Node Run(int time)
         {
-            while (time -- > 0)
+            if (root == null)
             {
-
+                throw new Exception();
             }
 
-            return default;
+            if (root.state.IsTerminal())
+            {
+                return root;
+            }
+
+            while (time-- > 0)
+            {
+                Node child = Selection(root);
+
+                if (child.simulateTimes != 0)
+                {
+                    child = Expansion(child);
+                }
+
+                Simulation(child);
+            }
+
+            return Selection(root);
         }
 
         public static Node Selection(Node node)

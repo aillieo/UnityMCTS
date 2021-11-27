@@ -13,7 +13,7 @@ namespace AillieoUtils.GoBang
 
         public bool IsTerminal()
         {
-            if (lastPlaced <= 0)
+            if (lastPlaced < 0)
             {
                 return false;
             }
@@ -74,7 +74,7 @@ namespace AillieoUtils.GoBang
             return false;
         }
 
-                
+
         private int GetChainedCountByDir(Vector2Int center, Vector2Int dir)
         {
             BoardValue centerValue = Get(center.x, center.y);
