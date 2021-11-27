@@ -1,22 +1,34 @@
-using AillieoUtils.MonteCarloTreeSearch;
+using AillieoUtils.GoBang;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SampleCase : MonoBehaviour
+namespace Sample
 {
-    void Start()
+    public class SampleCase : MonoBehaviour
     {
-        Node node = new Node();
+        private GoBangGame game;
 
-        MonteCarloTree tree = new MonteCarloTree();
+        private async void Start()
+        {
+            game = new GoBangGame();
 
-        tree.Selection(node);
+            game.CreatePlayer<PlayerHuman>();
+            game.CreatePlayer<PlayerAI>();
 
-        tree.Expansion(node);
+            game.Init();
 
-        tree.Simulation(node);
+            Player winner = await game.Run();
 
-        tree.BackPropagation(node);
+            Debug.LogError("游戏结束 胜利方是" + winner);
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (game != null)
+            {
+                game.DrawGizmos();
+            }
+        }
     }
 }

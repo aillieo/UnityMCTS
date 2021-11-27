@@ -6,7 +6,12 @@ namespace AillieoUtils.MonteCarloTreeSearch
 {
     public interface IState
     {
+        IEnumerable<IState> Expand();
 
+        float Simulate();
+
+        bool IsTerminal();
+
+        IState DeepCopy();
     }
-
 }
