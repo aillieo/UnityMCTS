@@ -12,12 +12,21 @@ namespace Sample
         public GoBangState goBangState;
         private Random rand = new Random();
 
-        private List<IState> cachedSimu = new List<IState>();
-        private GoBangStateWrapper cachedInitial = new GoBangStateWrapper(null);
+        private List<IState> cachedExpansion = new List<IState>();
+        private GoBangStateWrapper cachedInitial;
+
+        private int instanceId;
+        private static int sid;
 
         public GoBangStateWrapper(GoBangState goBangState)
         {
             this.goBangState = goBangState;
+            this.instanceId = sid++;
+        }
+
+        public GoBangStateWrapper()
+            : this(new GoBangState())
+        {
         }
 
         public IEnumerable<IState> Expand()
@@ -32,7 +41,7 @@ namespace Sample
                         {
                             for (int j = y - 1; j <= y + 1; ++j)
                             {
-                                if (GoBangState.ValidPos(i, j))
+                                if (GoBangGame.ValidPos(i, j))
                                 {
                                     if (goBangState.Get(i, j) == BoardValue.Empty)
                                     {
@@ -68,8 +77,16 @@ namespace Sample
 
         public float Simulate()
         {
-            cachedInitial = this.DeepCopy() as GoBangStateWrapper;
-            int simuTime = 5;
+            if (cachedInitial == null)
+            {
+                cachedInitial = this.DeepCopy() as GoBangStateWrapper;
+            }
+            else
+            {
+                Copy(this, cachedInitial);
+            }
+
+            int simuTime = 1000;
             PlayerSide selfSide = cachedInitial.goBangState.side;
             while (!cachedInitial.IsTerminal())
             {
@@ -78,10 +95,10 @@ namespace Sample
                     return 0.5f;
                 }
 
-                cachedSimu.Clear();
-                cachedSimu.AddRange(Expand());
-                int count = cachedSimu.Count();
-                IState rand = cachedSimu[this.rand.Next(0, count)];
+                cachedExpansion.Clear();
+                cachedExpansion.AddRange(Expand());
+                int count = cachedExpansion.Count();
+                IState rand = cachedExpansion[this.rand.Next(0, count)];
                 cachedInitial.goBangState = (rand as GoBangStateWrapper).goBangState;
             }
 
@@ -99,10 +116,21 @@ namespace Sample
 
         public IState DeepCopy()
         {
-            GoBangState newGoBangState = new GoBangState();
-            newGoBangState.side = this.goBangState.side;
-            Array.Copy(goBangState.boardState, newGoBangState.boardState, goBangState.boardState.Length);
-            return new GoBangStateWrapper(newGoBangState);
+            GoBangStateWrapper newIns = new GoBangStateWrapper();
+            Copy(this, newIns);
+            return newIns;
+        }
+
+        public static void Copy(GoBangStateWrapper src, GoBangStateWrapper dst)
+        {
+            dst.goBangState.side = src.goBangState.side;
+            Array.Copy(src.goBangState.boardState, dst.goBangState.boardState, src.goBangState.boardState.Length);
+            dst.goBangState.lastPlaced = src.goBangState.lastPlaced;
+        }
+
+        public override string ToString()
+        {
+            return $"({instanceId}){base.ToString()}";
         }
     }
 }

@@ -13,7 +13,7 @@ namespace AillieoUtils.GoBang
 
         public bool IsTerminal()
         {
-            if (lastPlaced < 0)
+            if (!GoBangGame.ValidIndex(lastPlaced))
             {
                 return false;
             }
@@ -83,7 +83,7 @@ namespace AillieoUtils.GoBang
             while (true)
             {
                 pos = pos + dir;
-                if (!ValidPos(pos.x, pos.y))
+                if (!GoBangGame.ValidPos(pos.x, pos.y))
                 {
                     break;
                 }
@@ -115,11 +115,6 @@ namespace AillieoUtils.GoBang
 
             boardState[index] = newValue;
             return true;
-        }
-
-        public static bool ValidPos(int x, int y)
-        {
-            return x >= 0 && x < GoBangGame.dimension && y >= 0 && y < GoBangGame.dimension;
         }
     }
 }

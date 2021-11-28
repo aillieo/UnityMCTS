@@ -20,7 +20,7 @@ namespace Sample
 
             Player winner = await game.Run();
 
-            Debug.LogError("游戏结束 胜利方是" + winner);
+            Debug.Log("游戏结束 胜利方是" + winner);
         }
 
         private void OnDrawGizmos()

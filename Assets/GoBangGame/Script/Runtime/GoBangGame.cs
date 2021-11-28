@@ -15,12 +15,12 @@ namespace AillieoUtils.GoBang
 
     public class GoBangGame
     {
-        public const int dimension = 15;
+        public const int dimension = 8;
 
         private GoBangState current;
         private Dictionary<PlayerSide, Player> players = new Dictionary<PlayerSide, Player>();
 
-        public Player CreatePlayer<T>() where T : Player
+        public T CreatePlayer<T>() where T : Player
         {
             if (!players.TryGetValue(PlayerSide.Black, out Player p1))
             {
@@ -30,7 +30,7 @@ namespace AillieoUtils.GoBang
                 p1.belongingGame = this;
                 p1.side = PlayerSide.Black;
 
-                return p1;
+                return p1 as T;
             }
 
             if (!players.TryGetValue(PlayerSide.White, out Player p2))
@@ -41,7 +41,7 @@ namespace AillieoUtils.GoBang
                 p2.belongingGame = this;
                 p2.side = PlayerSide.White;
 
-                return p1;
+                return p2 as T;
             }
 
             return null;
@@ -66,17 +66,7 @@ namespace AillieoUtils.GoBang
                 state = await PlayerMove();
             }
 
-            Player winner;
-
-            if (state.side == PlayerSide.Black)
-            {
-                winner = players[PlayerSide.White];
-            }
-            else
-            {
-                winner = players[PlayerSide.Black];
-            }
-
+            Player winner = players[Flip(state.side)];
             return winner;
         }
 
@@ -86,19 +76,26 @@ namespace AillieoUtils.GoBang
 
             Task<int> playTask = curPlayer.Play();
 
-            await Task.WhenAny(playTask, Task.Delay(5000));
+            //playTask.Wait();
+
+            await Task.WhenAny(playTask, Task.Delay(10000));
 
             if (!playTask.IsCompleted)
             {
-                throw new Exception();
+                throw new TimeoutException();
             }
-
-            BoardValue value = PlayerSideToBoardValue(current.side);
-            current.side = Flip(current.side);
 
             int index = await playTask;
             current.lastPlaced = index;
+
+            if (current.boardState[index] != BoardValue.Empty)
+            {
+                throw new InvalidOperationException();
+            }
+
+            BoardValue value = PlayerSideToBoardValue(current.side);
             current.boardState[index] = value;
+            current.side = Flip(current.side);
 
             return current;
         }
@@ -154,11 +151,19 @@ namespace AillieoUtils.GoBang
 
         public static int PosToIndex(int x, int y)
         {
+            if (!ValidPos(x, y))
+            {
+                throw new IndexOutOfRangeException($"x={x},y={y}");
+            }
             return x + y * dimension;
         }
 
         public static Vector2Int IndexToPos(int index)
         {
+            if (!ValidIndex(index))
+            {
+                throw new IndexOutOfRangeException($"index={index}");
+            }
             int x = index % dimension;
             int y = index / dimension;
             return new Vector2Int(x, y);
@@ -200,6 +205,16 @@ namespace AillieoUtils.GoBang
             {
                 return PlayerSide.Black;
             }
+        }
+
+        public static bool ValidPos(int x, int y)
+        {
+            return x >= 0 && x < dimension && y >= 0 && y < dimension;
+        }
+
+        public static bool ValidIndex(int index)
+        {
+            return index >= 0 && index < dimension * dimension;
         }
     }
 }

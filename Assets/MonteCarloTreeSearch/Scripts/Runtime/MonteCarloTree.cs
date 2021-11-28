@@ -26,6 +26,7 @@ namespace AillieoUtils.MonteCarloTreeSearch
                 root = new Node()
                 {
                     state = state,
+                    depth = 0,
                 },
             };
         }
@@ -42,7 +43,9 @@ namespace AillieoUtils.MonteCarloTreeSearch
                 return root;
             }
 
-            while (time-- > 0)
+            int rest = time;
+
+            while (rest-- > 0)
             {
                 Node child = Selection(root);
 
@@ -50,6 +53,8 @@ namespace AillieoUtils.MonteCarloTreeSearch
                 {
                     child = Expansion(child);
                 }
+
+                UnityEngine.Debug.Log($"Simu in Run ({rest}/{time})");
 
                 Simulation(child);
             }
@@ -59,9 +64,15 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
         public static Node Selection(Node node)
         {
+            UnityEngine.Debug.Log($"Selection: {node}");
             while (node.children != null && node.children.Count > 0)
             {
                 node = SelectChild(node);
+
+                if (node.depth > 225)
+                {
+                    throw new Exception("too deep");
+                }
             }
 
             return node;
@@ -86,6 +97,8 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
         public static Node Expansion(Node node)
         {
+            UnityEngine.Debug.Log($"Expansion: {node}");
+
             if (node.state.IsTerminal())
             {
                 return node;
@@ -93,7 +106,12 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
             foreach (var s in node.state.Expand())
             {
-                node.children.Add(new Node() { state = s });
+                node.children.Add(new Node()
+                {
+                    state = s,
+                    parent = node,
+                    depth = node.depth + 1,
+                });
             }
 
             return node.children.FirstOrDefault();
@@ -101,11 +119,16 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
         public static void Simulation(Node node)
         {
+            UnityEngine.Debug.Log($"Simulation: {node}");
+
             node.value += node.state.Simulate();
+            node.simulateTimes++;
         }
 
         public static void BackPropagation(Node node)
         {
+            UnityEngine.Debug.Log($"BackPropagation: {node}");
+
             while (node.parent != null)
             {
                 node = node.parent;

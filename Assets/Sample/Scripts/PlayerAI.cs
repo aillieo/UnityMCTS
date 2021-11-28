@@ -24,12 +24,13 @@ namespace Sample
             {
                 try
                 {
-                    Node node = tree.Run(5);
+                    Node node = tree.Run(10);
                     GoBangStateWrapper gbsw = node.state as GoBangStateWrapper;
                     tcs.SetResult(gbsw.goBangState.lastPlaced);
                 }
                 catch (Exception e)
                 {
+                    UnityEngine.Debug.LogError(e);
                     tcs.SetException(e);
                 }
             });

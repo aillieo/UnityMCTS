@@ -15,5 +15,10 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
         public int simulateTimes;
         public int depth;
+
+        public override string ToString()
+        {
+            return $"v={value} t={simulateTimes} d={depth} cc={children.Count} s={state}";
+        }
     }
 }
