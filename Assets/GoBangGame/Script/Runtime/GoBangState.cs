@@ -1,21 +1,29 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace AillieoUtils.GoBang
 {
     public class GoBangState
     {
+        public int step;
         public int lastPlaced = -1;
         public readonly BoardValue[] boardState = new BoardValue[GoBangGame.dimension * GoBangGame.dimension];
-        public PlayerSide side = PlayerSide.Black;
+        public PlayerSide lastPlacedSide = PlayerSide.Black;
 
         public bool IsTerminal()
         {
             if (!GoBangGame.ValidIndex(lastPlaced))
             {
                 return false;
+            }
+
+            if (!boardState.Any(v => v == BoardValue.Empty))
+            {
+                lastPlaced = -1;
+                return true;
             }
 
             Vector2Int lastPlacedPos = GoBangGame.IndexToPos(lastPlaced);

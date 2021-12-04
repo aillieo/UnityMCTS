@@ -10,28 +10,27 @@ namespace Sample
 {
     public class PlayerAI : Player
     {
-        private MonteCarloTree tree;
-
         public override Task<int> Play()
         {
-            if (tree == null)
-            {
-                tree = MonteCarloTree.CreateTree(new GoBangStateWrapper(belongingGame.GetCurrentState()));
-            }
+            MonteCarloTree<GoBangStateWrapper> tree = MonteCarloTree<GoBangStateWrapper>.CreateTree(new GoBangStateWrapper(belongingGame.GetCurrentState()));
 
             TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
             ThreadPool.QueueUserWorkItem(o =>
             {
                 try
                 {
-                    Node node = tree.Run(10);
-                    GoBangStateWrapper gbsw = node.state as GoBangStateWrapper;
+                    Node<GoBangStateWrapper> node = tree.Run(2000);
+                    GoBangStateWrapper gbsw = node.state;
                     tcs.SetResult(gbsw.goBangState.lastPlaced);
                 }
                 catch (Exception e)
                 {
                     UnityEngine.Debug.LogError(e);
                     tcs.SetException(e);
+                }
+                finally
+                {
+                    //MonteCarloTree<GoBangStateWrapper>.Recycle(tree);
                 }
             });
             return tcs.Task;

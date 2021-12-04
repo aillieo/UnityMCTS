@@ -4,14 +4,14 @@ using UnityEngine;
 
 namespace AillieoUtils.MonteCarloTreeSearch
 {
-    public class Node
+    public class Node<T> where T : class, IState<T>, new()
     {
-        public IState state;
+        public T state = new T();
 
         public float value;
 
-        public Node parent;
-        public readonly List<Node> children = new List<Node>();
+        public Node<T> parent;
+        public readonly List<Node<T>> children = new List<Node<T>>();
 
         public int simulateTimes;
         public int depth;
@@ -19,6 +19,21 @@ namespace AillieoUtils.MonteCarloTreeSearch
         public override string ToString()
         {
             return $"v={value} t={simulateTimes} d={depth} cc={children.Count} s={state}";
+        }
+
+        public void Reset()
+        {
+            value = 0;
+            parent = null;
+            foreach (var c in children)
+            {
+                MonteCarloTree<T>.RecycleNode(c);
+            }
+
+            children.Clear();
+            simulateTimes = 0;
+            depth = 0;
+            state.Reset();
         }
     }
 }

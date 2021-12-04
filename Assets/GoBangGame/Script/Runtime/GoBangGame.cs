@@ -15,7 +15,8 @@ namespace AillieoUtils.GoBang
 
     public class GoBangGame
     {
-        public const int dimension = 8;
+        //public const int dimension = 15;
+        public const int dimension = 10;
 
         private GoBangState current;
         private Dictionary<PlayerSide, Player> players = new Dictionary<PlayerSide, Player>();
@@ -50,7 +51,7 @@ namespace AillieoUtils.GoBang
         public void Init()
         {
             current = new GoBangState();
-            current.side = PlayerSide.Black;
+            current.lastPlacedSide = PlayerSide.White;
         }
 
         public GoBangState GetCurrentState()
@@ -66,19 +67,20 @@ namespace AillieoUtils.GoBang
                 state = await PlayerMove();
             }
 
-            Player winner = players[Flip(state.side)];
+            Player winner = players[state.lastPlacedSide];
             return winner;
         }
 
         public async Task<GoBangState> PlayerMove()
         {
-            Player curPlayer = players[current.side];
+            PlayerSide curSide = Flip(current.lastPlacedSide);
+            Player curPlayer = players[curSide];
 
             Task<int> playTask = curPlayer.Play();
 
             //playTask.Wait();
 
-            await Task.WhenAny(playTask, Task.Delay(10000));
+            await Task.WhenAny(playTask, Task.Delay(60000));
 
             if (!playTask.IsCompleted)
             {
@@ -86,16 +88,17 @@ namespace AillieoUtils.GoBang
             }
 
             int index = await playTask;
-            current.lastPlaced = index;
 
             if (current.boardState[index] != BoardValue.Empty)
             {
                 throw new InvalidOperationException();
             }
 
-            BoardValue value = PlayerSideToBoardValue(current.side);
+            current.lastPlaced = index;
+            current.lastPlacedSide = curSide;
+            current.step++;
+            BoardValue value = PlayerSideToBoardValue(curSide);
             current.boardState[index] = value;
-            current.side = Flip(current.side);
 
             return current;
         }

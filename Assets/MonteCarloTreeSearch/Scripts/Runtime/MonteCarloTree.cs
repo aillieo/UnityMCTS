@@ -6,24 +6,27 @@ using UnityEngine;
 
 namespace AillieoUtils.MonteCarloTreeSearch
 {
-    public class MonteCarloTree
+    public class MonteCarloTree<T> where T : class, IState<T>, new()
     {
         // Selection
         // Expansion
         // Simulation
         // Back propagation
 
-        private Node root;
+        private Node<T> root;
 
         private MonteCarloTree()
         {
         }
 
-        public static MonteCarloTree CreateTree(IState state)
+        public static MonteCarloTree<T> CreateTree(T state)
         {
-            return new MonteCarloTree()
+            Node<T> node = GetNode();
+            node.state.CopyFrom(state);
+
+            return new MonteCarloTree<T>()
             {
-                root = new Node()
+                root = new Node<T>()
                 {
                     state = state,
                     depth = 0,
@@ -31,7 +34,43 @@ namespace AillieoUtils.MonteCarloTreeSearch
             };
         }
 
-        public Node Run(int time)
+        private static Pool<Node<T>> nodePool;
+        private static Pool<T> statePool;
+
+        static MonteCarloTree()
+        {
+            nodePool = new Pool<Node<T>>();
+            statePool = new Pool<T>();
+        }
+
+        public static void Recycle(MonteCarloTree<T> toRecycle)
+        {
+            RecycleNode(toRecycle.root);
+        }
+
+        public static T GetState()
+        {
+            return statePool.Get();
+        }
+
+        public static void RecycleState(T toRecycle)
+        {
+            toRecycle.Reset();
+            statePool.Recycle(toRecycle);
+        }
+
+        public static Node<T> GetNode()
+        {
+            return nodePool.Get();
+        }
+
+        public static void RecycleNode(Node<T> toRecycle)
+        {
+            toRecycle.Reset();
+            nodePool.Recycle(toRecycle);
+        }
+
+        public Node<T> Run(int time)
         {
             if (root == null)
             {
@@ -47,26 +86,39 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
             while (rest-- > 0)
             {
-                Node child = Selection(root);
+                Node<T> child = Selection(root);
 
+                //if (child.simulateTimes != 0 || child.children.Any(c => c.simulateTimes == 0))
                 if (child.simulateTimes != 0)
                 {
                     child = Expansion(child);
                 }
 
-                UnityEngine.Debug.Log($"Simu in Run ({rest}/{time})");
+                float value = Simulation(child);
+                BackPropagation(child, value);
 
-                Simulation(child);
+                //UnityEngine.Debug.Log($"Simu in Run ({rest}/{time})");
             }
 
-            return Selection(root);
+            UnityEngine.Debug.Log($"will sel from {root}");
+            foreach (var c in root.children)
+            {
+                UnityEngine.Debug.Log($"{c}");
+            }
+
+            return SelectChild(root);
         }
 
-        public static Node Selection(Node node)
+        public static Node<T> Selection(Node<T> node)
         {
-            UnityEngine.Debug.Log($"Selection: {node}");
             while (node.children != null && node.children.Count > 0)
             {
+                var newChildren = node.children.Where(c => c.simulateTimes == 0);
+                if (newChildren.Any())
+                {
+                    return newChildren.First();
+                }
+
                 node = SelectChild(node);
 
                 if (node.depth > 225)
@@ -75,12 +127,14 @@ namespace AillieoUtils.MonteCarloTreeSearch
                 }
             }
 
+            //UnityEngine.Debug.Log($"Selection: {node}");
+
             return node;
         }
 
-        private static Node SelectChild(Node node)
+        private static Node<T> SelectChild(Node<T> node)
         {
-            Node best = default;
+            Node<T> best = default;
             float max = float.MinValue;
             foreach (var n in node.children)
             {
@@ -95,47 +149,61 @@ namespace AillieoUtils.MonteCarloTreeSearch
             return best;
         }
 
-        public static Node Expansion(Node node)
+        public static Node<T> Expansion(Node<T> node)
         {
-            UnityEngine.Debug.Log($"Expansion: {node}");
+            //UnityEngine.Debug.Log($"Expansion: {node}");
 
             if (node.state.IsTerminal())
             {
                 return node;
             }
 
-            foreach (var s in node.state.Expand())
+            if (node.children == null || node.children.Count == 0)
             {
-                node.children.Add(new Node()
+                foreach (var s in node.state.Expand())
                 {
-                    state = s,
-                    parent = node,
-                    depth = node.depth + 1,
-                });
+                    node.children.Add(new Node<T>()
+                    {
+                        state = s,
+                        parent = node,
+                        depth = node.depth + 1,
+                    });
+                }
+            }
+
+            var newChildren = node.children.Where(c => c.simulateTimes == 0);
+            if (newChildren.Any())
+            {
+                return newChildren.First();
             }
 
             return node.children.FirstOrDefault();
         }
 
-        public static void Simulation(Node node)
+        public float Simulation(Node<T> node)
         {
-            UnityEngine.Debug.Log($"Simulation: {node}");
+            //UnityEngine.Debug.Log($"Simulation: {node}");
 
-            node.value += node.state.Simulate();
+            float value = node.state.Simulate();
+            node.value += value;
             node.simulateTimes++;
+            return value;
         }
 
-        public static void BackPropagation(Node node)
+        public static void BackPropagation(Node<T> node, float value)
         {
-            UnityEngine.Debug.Log($"BackPropagation: {node}");
+            //UnityEngine.Debug.Log($"BackPropagation: {node}");
 
-            while (node.parent != null)
+            Node<T> parent = node.parent;
+            while (parent != null)
             {
-                node = node.parent;
+                parent.simulateTimes++;
+                parent.value += value;
+                parent = parent.parent;
             }
         }
 
-        private static float UCT(Node node)
+        private static float UCT(Node<T> node)
         {
             float exploit = node.value / node.simulateTimes;
             float explore = Mathf.Sqrt(Mathf.Log(node.parent.simulateTimes) / node.simulateTimes);

@@ -4,14 +4,16 @@ using UnityEngine;
 
 namespace AillieoUtils.MonteCarloTreeSearch
 {
-    public interface IState
+    public interface IState<T> where T : class, IState<T>, new()
     {
-        IEnumerable<IState> Expand();
+        IEnumerable<T> Expand();
 
         float Simulate();
 
         bool IsTerminal();
 
-        IState DeepCopy();
+        void CopyFrom(T src);
+
+        void Reset();
     }
 }
