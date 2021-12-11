@@ -80,7 +80,7 @@ namespace AillieoUtils.GoBang
 
             //playTask.Wait();
 
-            await Task.WhenAny(playTask, Task.Delay(60000));
+            await Task.WhenAny(playTask, Task.Delay(180_000));
 
             if (!playTask.IsCompleted)
             {
@@ -127,6 +127,23 @@ namespace AillieoUtils.GoBang
                     }
                 }
             }
+
+            PlayerSide toPlay = Flip(state.lastPlacedSide);
+            Color color = Gizmos.color;
+
+            switch (toPlay)
+            {
+                case PlayerSide.Black:
+                    Gizmos.color = Color.black;
+                    break;
+                case PlayerSide.White:
+                    Gizmos.color = Color.white;
+                    break;
+            }
+
+            Gizmos.DrawCube(new Vector3(-2, 0, 0), Vector3.one * 2);
+
+            Gizmos.color = color;
         }
 
         private void DrawPiece(BoardValue value, int posX, int posY)

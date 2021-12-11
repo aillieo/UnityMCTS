@@ -20,12 +20,6 @@ namespace AillieoUtils.GoBang
                 return false;
             }
 
-            if (!boardState.Any(v => v == BoardValue.Empty))
-            {
-                lastPlaced = -1;
-                return true;
-            }
-
             Vector2Int lastPlacedPos = GoBangGame.IndexToPos(lastPlaced);
             // horizontal
             int left = GetChainedCountByDir(lastPlacedPos, Vector2Int.left);
@@ -79,9 +73,14 @@ namespace AillieoUtils.GoBang
                 return true;
             }
 
+            if (!boardState.Any(v => v == BoardValue.Empty))
+            {
+                lastPlaced = -1;
+                return true;
+            }
+
             return false;
         }
-
 
         private int GetChainedCountByDir(Vector2Int center, Vector2Int dir)
         {

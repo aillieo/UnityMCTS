@@ -18,7 +18,7 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
         public override string ToString()
         {
-            return $"v={value} t={simulateTimes} d={depth} cc={children.Count} s={state}";
+            return $"v/t={(simulateTimes > 0 ? value / simulateTimes : 0)}({value}/{simulateTimes}) d={depth} cc={children.Count} s={state}";
         }
 
         public void Reset()

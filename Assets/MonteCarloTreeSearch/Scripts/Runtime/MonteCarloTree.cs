@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 namespace AillieoUtils.MonteCarloTreeSearch
@@ -35,28 +36,15 @@ namespace AillieoUtils.MonteCarloTreeSearch
         }
 
         private static Pool<Node<T>> nodePool;
-        private static Pool<T> statePool;
 
         static MonteCarloTree()
         {
-            nodePool = new Pool<Node<T>>();
-            statePool = new Pool<T>();
+            nodePool = new Pool<Node<T>>(32768);
         }
 
         public static void Recycle(MonteCarloTree<T> toRecycle)
         {
             RecycleNode(toRecycle.root);
-        }
-
-        public static T GetState()
-        {
-            return statePool.Get();
-        }
-
-        public static void RecycleState(T toRecycle)
-        {
-            toRecycle.Reset();
-            statePool.Recycle(toRecycle);
         }
 
         public static Node<T> GetNode()
@@ -70,8 +58,11 @@ namespace AillieoUtils.MonteCarloTreeSearch
             nodePool.Recycle(toRecycle);
         }
 
-        public Node<T> Run(int time)
+        public Node<T> Run(int milliseconds)
         {
+            DateTime start = DateTime.Now;
+            DateTime end = start.AddMilliseconds(milliseconds);
+
             if (root == null)
             {
                 throw new Exception();
@@ -82,9 +73,7 @@ namespace AillieoUtils.MonteCarloTreeSearch
                 return root;
             }
 
-            int rest = time;
-
-            while (rest-- > 0)
+            while (DateTime.Now < end)
             {
                 Node<T> child = Selection(root);
 
@@ -96,11 +85,9 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
                 float value = Simulation(child);
                 BackPropagation(child, value);
-
-                //UnityEngine.Debug.Log($"Simu in Run ({rest}/{time})");
             }
 
-            UnityEngine.Debug.Log($"will sel from {root}");
+            //UnityEngine.Debug.Log($"will sel from {root}");
             foreach (var c in root.children)
             {
                 UnityEngine.Debug.Log($"{c}");
@@ -113,12 +100,6 @@ namespace AillieoUtils.MonteCarloTreeSearch
         {
             while (node.children != null && node.children.Count > 0)
             {
-                var newChildren = node.children.Where(c => c.simulateTimes == 0);
-                if (newChildren.Any())
-                {
-                    return newChildren.First();
-                }
-
                 node = SelectChild(node);
 
                 if (node.depth > 225)
@@ -205,7 +186,7 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
         private static float UCT(Node<T> node)
         {
-            float exploit = node.value / node.simulateTimes;
+            float exploit = node.simulateTimes == 0 ? 0 : node.value / node.simulateTimes;
             float explore = Mathf.Sqrt(Mathf.Log(node.parent.simulateTimes) / node.simulateTimes);
             float c = 1.41421356f;
             return exploit + c * explore;

@@ -1,19 +1,26 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace AillieoUtils.MonteCarloTreeSearch
 {
     public class Pool<T> where T : class, new()
     {
-        private readonly Stack<T> stack = new Stack<T>();
+        private readonly BlockingCollection<T> stack;
+
+        public Pool(int capacity)
+        {
+            this.stack = new BlockingCollection<T>(capacity);
+        }
 
         public T Get()
         {
-            if (stack.Count > 0)
+            if (stack.TryTake(out T obj))
             {
-                return stack.Pop();
+                return obj;
             }
 
             return new T();
@@ -21,7 +28,7 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
         public void Recycle(T obj)
         {
-            stack.Push(obj);
+            stack.TryAdd(obj);
         }
     }
 }
