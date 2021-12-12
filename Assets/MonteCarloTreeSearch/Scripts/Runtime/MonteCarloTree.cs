@@ -88,10 +88,10 @@ namespace AillieoUtils.MonteCarloTreeSearch
             }
 
             //UnityEngine.Debug.Log($"will sel from {root}");
-            foreach (var c in root.children)
-            {
-                UnityEngine.Debug.Log($"{c}");
-            }
+            //foreach (var c in root.children)
+            //{
+            //    UnityEngine.Debug.Log($"{c}");
+            //}
 
             return SelectChild(root);
         }

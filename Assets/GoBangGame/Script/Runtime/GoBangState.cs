@@ -73,7 +73,23 @@ namespace AillieoUtils.GoBang
                 return true;
             }
 
-            if (!boardState.Any(v => v == BoardValue.Empty))
+            //if (!boardState.Any(v => v == BoardValue.Empty))
+            //{
+            //    lastPlaced = -1;
+            //    return true;
+            //}
+            // avoid GC
+            bool anyEmpty = false;
+            foreach (var value in boardState)
+            {
+                if (value == BoardValue.Empty)
+                {
+                    anyEmpty = true;
+                    break;
+                }
+            }
+
+            if (!anyEmpty)
             {
                 lastPlaced = -1;
                 return true;

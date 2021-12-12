@@ -30,7 +30,7 @@ namespace Sample
             MonteCarloTree<GoBangStateWrapper> tree = MonteCarloTree<GoBangStateWrapper>.CreateTree(new GoBangStateWrapper(belongingGame.GetCurrentState()));
             try
             {
-                Node<GoBangStateWrapper> node = tree.Run(30_000);
+                Node<GoBangStateWrapper> node = tree.Run(60_000);
                 GoBangStateWrapper gbsw = node.state;
                 tcs.SetResult(gbsw.goBangState.lastPlaced);
             }

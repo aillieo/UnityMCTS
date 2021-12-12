@@ -13,7 +13,6 @@ namespace Sample
         public GoBangState goBangState;
         private Random rand = new Random();
 
-        private List<GoBangStateWrapper> cachedExpansion = new List<GoBangStateWrapper>();
         private GoBangStateWrapper cachedInitial;
         private HashSet<int> cachedActions = new HashSet<int>();
 
@@ -74,7 +73,7 @@ namespace Sample
 
         public static GoBangStateWrapper ApplyAction(GoBangStateWrapper initial, int action)
         {
-            GoBangStateWrapper newState = GoBangStateWrapper.Get();
+            GoBangStateWrapper newState = StatePool.GetState();
             newState.CopyFrom(initial);
             PlayerSide curSide = GoBangGame.Flip(newState.goBangState.lastPlacedSide);
             UnityEngine.Vector2Int pos = GoBangGame.IndexToPos(action);
@@ -101,7 +100,7 @@ namespace Sample
 
             int simuTime = 1000;
             PlayerSide selfSide = GoBangGame.Flip(cachedInitial.goBangState.lastPlacedSide);
-            selfSide = PlayerSide.White;
+            selfSide = PlayerSide.White; // todo
 
             while (!cachedInitial.IsTerminal())
             {
@@ -111,22 +110,24 @@ namespace Sample
                     return 0.5f;
                 }
 
-                cachedExpansion.Clear();
-                cachedExpansion.AddRange(cachedInitial.Expand());
-                int count = cachedExpansion.Count();
+                List<GoBangStateWrapper> expansion = StatePool.GetStateList();
+                expansion.AddRange(cachedInitial.Expand());
+                int count = expansion.Count();
                 if (count == 0)
                 {
                     UnityEngine.Debug.LogError("s" + cachedInitial);
                     throw new InvalidOperationException();
                 }
 
-                GoBangStateWrapper rand = cachedExpansion[this.rand.Next(0, count)];
+                GoBangStateWrapper rand = expansion[this.rand.Next(0, count)];
                 cachedInitial.CopyFrom(rand);
 
-                foreach (var s in cachedExpansion)
+                foreach (var s in expansion)
                 {
-                    Recycle(s);
+                    StatePool.RecycleState(s);
                 }
+
+                StatePool.RecycleStateList(expansion);
             }
 
             if (!GoBangGame.ValidIndex(cachedInitial.goBangState.lastPlaced))
@@ -189,19 +190,6 @@ namespace Sample
 
         public void Reset()
         {
-        }
-
-        // pooling
-        private static readonly Pool<GoBangStateWrapper> pool = new Pool<GoBangStateWrapper>(32768);
-        public static GoBangStateWrapper Get()
-        {
-            return pool.Get();
-        }
-
-        public static void Recycle(GoBangStateWrapper toRecycle)
-        {
-            toRecycle.Reset();
-            pool.Recycle(toRecycle);
         }
     }
 }
