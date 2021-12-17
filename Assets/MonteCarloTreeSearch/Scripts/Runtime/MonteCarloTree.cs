@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using UnityEngine;
 
 namespace AillieoUtils.MonteCarloTreeSearch
@@ -16,17 +17,22 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
         private Node<T> root;
 
+        private IAgent agent;
+
+        // private readonly ReaderWriterLockSlim readerWriterLock = new ReaderWriterLockSlim();
+
         private MonteCarloTree()
         {
         }
 
-        public static MonteCarloTree<T> CreateTree(T state)
+        public static MonteCarloTree<T> CreateTree(IAgent agent, T state)
         {
             Node<T> node = GetNode();
             node.state.CopyFrom(state);
 
             return new MonteCarloTree<T>()
             {
+                agent = agent,
                 root = new Node<T>()
                 {
                     state = state,
@@ -87,11 +93,11 @@ namespace AillieoUtils.MonteCarloTreeSearch
                 BackPropagation(child, value);
             }
 
-            //UnityEngine.Debug.Log($"will sel from {root}");
-            //foreach (var c in root.children)
-            //{
-            //    UnityEngine.Debug.Log($"{c}");
-            //}
+            UnityEngine.Debug.Log($"will sel from {root}");
+            foreach (var c in root.children)
+            {
+                UnityEngine.Debug.Log($"{c}");
+            }
 
             return SelectChild(root);
         }
@@ -165,7 +171,7 @@ namespace AillieoUtils.MonteCarloTreeSearch
         {
             //UnityEngine.Debug.Log($"Simulation: {node}");
 
-            float value = node.state.Simulate();
+            float value = node.state.Simulate(agent);
             node.value += value;
             node.simulateTimes++;
             return value;

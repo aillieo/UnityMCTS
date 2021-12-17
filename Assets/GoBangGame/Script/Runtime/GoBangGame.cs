@@ -65,6 +65,8 @@ namespace AillieoUtils.GoBang
             while (!state.IsTerminal())
             {
                 state = await PlayerMove();
+                //await Task.Yield();
+                await Task.Delay(1);
             }
 
             Player winner = players[state.lastPlacedSide];
@@ -78,16 +80,22 @@ namespace AillieoUtils.GoBang
 
             Task<int> playTask = curPlayer.Play();
 
-            //playTask.Wait();
-
-            await Task.WhenAny(playTask, Task.Delay(180_000));
+            if (curPlayer.maxOperationSeconds > 0 && !float.IsInfinity(curPlayer.maxOperationSeconds))
+            {
+                int ms = (int)Math.Round(curPlayer.maxOperationSeconds * 1000);
+                await Task.WhenAny(playTask, Task.Delay(ms));
+            }
+            else
+            {
+                await playTask;
+            }
 
             if (!playTask.IsCompleted)
             {
                 throw new TimeoutException();
             }
 
-            int index = await playTask;
+            int index = playTask.Result;
 
             if (current.boardState[index] != BoardValue.Empty)
             {

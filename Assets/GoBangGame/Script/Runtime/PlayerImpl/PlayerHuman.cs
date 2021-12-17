@@ -8,6 +8,8 @@ namespace AillieoUtils.GoBang
 {
     public class PlayerHuman : Player
     {
+        public override float maxOperationSeconds => float.PositiveInfinity;
+
         public override Task<int> Play()
         {
             TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();

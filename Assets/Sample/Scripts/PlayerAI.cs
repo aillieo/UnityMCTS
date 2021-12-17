@@ -9,8 +9,12 @@ using System.Threading.Tasks;
 
 namespace Sample
 {
-    public class PlayerAI : Player
+    public class PlayerAI : Player, IAgent
     {
+        public float maxPlanningSeconds = 300;
+
+        public override float maxOperationSeconds => maxPlanningSeconds + 1;
+
         public override Task<int> Play()
         {
             TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
@@ -27,10 +31,11 @@ namespace Sample
 
         private void InternalPlay(TaskCompletionSource<int> tcs)
         {
-            MonteCarloTree<GoBangStateWrapper> tree = MonteCarloTree<GoBangStateWrapper>.CreateTree(new GoBangStateWrapper(belongingGame.GetCurrentState()));
+            MonteCarloTree<GoBangStateWrapper> tree = MonteCarloTree<GoBangStateWrapper>.CreateTree(this, new GoBangStateWrapper(belongingGame.GetCurrentState()));
             try
             {
-                Node<GoBangStateWrapper> node = tree.Run(60_000);
+                int ms = (int)Math.Round(maxPlanningSeconds * 1000);
+                Node<GoBangStateWrapper> node = tree.Run(ms);
                 GoBangStateWrapper gbsw = node.state;
                 tcs.SetResult(gbsw.goBangState.lastPlaced);
             }

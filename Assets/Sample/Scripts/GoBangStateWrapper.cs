@@ -89,7 +89,7 @@ namespace Sample
             return goBangState.IsTerminal();
         }
 
-        public float Simulate()
+        public float Simulate(IAgent agent)
         {
             if (cachedInitial == null)
             {
@@ -99,8 +99,8 @@ namespace Sample
             cachedInitial.CopyFrom(this);
 
             int simuTime = 1000;
-            PlayerSide selfSide = GoBangGame.Flip(cachedInitial.goBangState.lastPlacedSide);
-            selfSide = PlayerSide.White; // todo
+            PlayerSide selfSide = (agent as PlayerAI).side;
+            //selfSide = PlayerSide.White; // todo
 
             while (!cachedInitial.IsTerminal())
             {

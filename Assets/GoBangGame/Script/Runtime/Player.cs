@@ -16,5 +16,7 @@ namespace AillieoUtils.GoBang
         public GoBangGame belongingGame { get; protected internal set; }
 
         public abstract Task<int> Play();
+
+        public abstract float maxOperationSeconds { get; }
     }
 }

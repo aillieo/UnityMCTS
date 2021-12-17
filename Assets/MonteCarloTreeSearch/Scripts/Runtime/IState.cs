@@ -4,11 +4,11 @@ using UnityEngine;
 
 namespace AillieoUtils.MonteCarloTreeSearch
 {
-    public interface IState<T> where T : class, IState<T>, new()
+    public interface IState<T> where T : IState<T>
     {
         IEnumerable<T> Expand();
 
-        float Simulate();
+        float Simulate(IAgent agent);
 
         bool IsTerminal();
 
