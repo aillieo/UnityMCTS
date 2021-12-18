@@ -19,7 +19,7 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
         private IAgent agent;
 
-        // private readonly ReaderWriterLockSlim readerWriterLock = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim readerWriterLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
         private MonteCarloTree()
         {
@@ -74,19 +74,44 @@ namespace AillieoUtils.MonteCarloTreeSearch
                 throw new Exception();
             }
 
-            if (root.state.IsTerminal())
+            readerWriterLock.EnterReadLock();
+            try
             {
-                return root;
+                if (root.state.IsTerminal())
+                {
+                    return root;
+                }
+            }
+            catch (Exception e)
+            {
+                UnityEngine.Debug.LogError(e);
+                throw;
+            }
+            finally
+            {
+                readerWriterLock.ExitReadLock();
             }
 
             while (DateTime.Now < end)
             {
                 Node<T> child = Selection(root);
 
-                //if (child.simulateTimes != 0 || child.children.Any(c => c.simulateTimes == 0))
-                if (child.simulateTimes != 0)
+                readerWriterLock.EnterWriteLock();
+                try
                 {
-                    child = Expansion(child);
+                    if (child.simulateTimes != 0)
+                    {
+                        child = Expansion(child);
+                    }
+                }
+                catch (Exception e)
+                {
+                    UnityEngine.Debug.LogError(e);
+                    throw;
+                }
+                finally
+                {
+                    readerWriterLock.ExitWriteLock();
                 }
 
                 float value = Simulation(child);
@@ -102,24 +127,37 @@ namespace AillieoUtils.MonteCarloTreeSearch
             return SelectChild(root);
         }
 
-        public static Node<T> Selection(Node<T> node)
+        public Node<T> Selection(Node<T> node)
         {
-            while (node.children != null && node.children.Count > 0)
+            readerWriterLock.EnterReadLock();
+            try
             {
-                node = SelectChild(node);
-
-                if (node.depth > 225)
+                while (node.children != null && node.children.Count > 0)
                 {
-                    throw new Exception("too deep");
+                    node = SelectChild(node);
+
+                    if (node.depth > 225)
+                    {
+                        throw new Exception("too deep");
+                    }
                 }
+
+                //UnityEngine.Debug.Log($"Selection: {node}");
+
+                return node;
             }
-
-            //UnityEngine.Debug.Log($"Selection: {node}");
-
-            return node;
+            catch (Exception e)
+            {
+                UnityEngine.Debug.LogError(e);
+                throw;
+            }
+            finally
+            {
+                readerWriterLock.ExitReadLock();
+            }
         }
 
-        private static Node<T> SelectChild(Node<T> node)
+        private Node<T> SelectChild(Node<T> node)
         {
             Node<T> best = default;
             float max = float.MinValue;
@@ -136,7 +174,7 @@ namespace AillieoUtils.MonteCarloTreeSearch
             return best;
         }
 
-        public static Node<T> Expansion(Node<T> node)
+        public Node<T> Expansion(Node<T> node)
         {
             //UnityEngine.Debug.Log($"Expansion: {node}");
 
@@ -169,30 +207,78 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
         public float Simulation(Node<T> node)
         {
-            //UnityEngine.Debug.Log($"Simulation: {node}");
 
-            float value = node.state.Simulate(agent);
-            node.value += value;
-            node.simulateTimes++;
-            return value;
+            float value = default;
+
+            //readerWriterLock.EnterUpgradeableReadLock();
+            //readerWriterLock.EnterReadLock();
+            try
+            {
+                value = node.state.Simulate(agent);
+            }
+            catch (Exception e)
+            {
+                UnityEngine.Debug.LogError(e);
+                throw;
+            }
+            finally
+            {
+                //readerWriterLock.ExitUpgradeableReadLock();
+                //readerWriterLock.ExitReadLock();
+            }
+
+            readerWriterLock.EnterWriteLock();
+
+            try
+            {
+                node.value += value;
+                node.simulateTimes++;
+                return value;
+            }
+            catch (Exception e)
+            {
+                UnityEngine.Debug.LogError(e);
+                throw;
+            }
+            finally
+            {
+                readerWriterLock.ExitWriteLock();
+            }
         }
 
-        public static void BackPropagation(Node<T> node, float value)
+        public void BackPropagation(Node<T> node, float value)
         {
-            //UnityEngine.Debug.Log($"BackPropagation: {node}");
+            readerWriterLock.EnterWriteLock();
 
-            Node<T> parent = node.parent;
-            while (parent != null)
+            try
             {
-                parent.simulateTimes++;
-                parent.value += value;
-                parent = parent.parent;
+                Node<T> parent = node.parent;
+                while (parent != null)
+                {
+                    parent.simulateTimes++;
+                    parent.value += value;
+                    parent = parent.parent;
+                }
+            }
+            catch (Exception e)
+            {
+                UnityEngine.Debug.LogError(e);
+                throw;
+            }
+            finally
+            {
+                readerWriterLock.ExitWriteLock();
             }
         }
 
         private static float UCT(Node<T> node)
         {
-            float exploit = node.simulateTimes == 0 ? 0 : node.value / node.simulateTimes;
+            if (node.simulateTimes == 0)
+            {
+                return float.MaxValue;
+            }
+
+            float exploit = node.value / node.simulateTimes;
             float explore = Mathf.Sqrt(Mathf.Log(node.parent.simulateTimes) / node.simulateTimes);
             float c = 1.41421356f;
             return exploit + c * explore;

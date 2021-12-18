@@ -13,9 +13,6 @@ namespace Sample
         public GoBangState goBangState;
         private Random rand = new Random();
 
-        private GoBangStateWrapper cachedInitial;
-        private HashSet<int> cachedActions = new HashSet<int>();
-
         private int instanceId;
         private static int sid;
 
@@ -34,7 +31,7 @@ namespace Sample
         {
             //UnityEngine.Debug.Log($"Expand from:\n{this}");
 
-            cachedActions.Clear();
+            HashSet<int> cachedActions = StatePool.GetActionSet();
             for (int x = 0; x < GoBangGame.dimension; ++x)
             {
                 for (int y = 0; y < GoBangGame.dimension; ++y)
@@ -69,6 +66,8 @@ namespace Sample
                     }
                 }
             }
+
+            StatePool.RecycleActionSet(cachedActions);
         }
 
         public static GoBangStateWrapper ApplyAction(GoBangStateWrapper initial, int action)
@@ -91,11 +90,7 @@ namespace Sample
 
         public float Simulate(IAgent agent)
         {
-            if (cachedInitial == null)
-            {
-                cachedInitial = new GoBangStateWrapper();
-            }
-
+            GoBangStateWrapper cachedInitial = StatePool.GetState();
             cachedInitial.CopyFrom(this);
 
             int simuTime = 1000;
@@ -112,15 +107,15 @@ namespace Sample
 
                 List<GoBangStateWrapper> expansion = StatePool.GetStateList();
                 expansion.AddRange(cachedInitial.Expand());
-                int count = expansion.Count();
+                int count = expansion.Count;
                 if (count == 0)
                 {
                     UnityEngine.Debug.LogError("s" + cachedInitial);
                     throw new InvalidOperationException();
                 }
 
-                GoBangStateWrapper rand = expansion[this.rand.Next(0, count)];
-                cachedInitial.CopyFrom(rand);
+                GoBangStateWrapper randState = expansion[this.rand.Next(0, count)];
+                cachedInitial.CopyFrom(randState);
 
                 foreach (var s in expansion)
                 {

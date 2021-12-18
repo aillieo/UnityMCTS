@@ -7,7 +7,8 @@ namespace Sample
     public static class StatePool
     {
         private static readonly Pool<GoBangStateWrapper> statePool = new Pool<GoBangStateWrapper>(32768);
-        private static readonly Pool<List<GoBangStateWrapper>> stateListPool = new Pool<List<GoBangStateWrapper>>(4);
+        private static readonly Pool<List<GoBangStateWrapper>> stateListPool = new Pool<List<GoBangStateWrapper>>(8);
+        private static readonly Pool<HashSet<int>> actionsPool = new Pool<HashSet<int>>(8);
 
         public static GoBangStateWrapper GetState()
         {
@@ -33,6 +34,17 @@ namespace Sample
             //}
             toRecycle.Clear();
             stateListPool.Recycle(toRecycle);
+        }
+
+        public static HashSet<int> GetActionSet()
+        {
+            return actionsPool.Get();
+        }
+
+        public static void RecycleActionSet(HashSet<int> toRecycle)
+        {
+            toRecycle.Clear();
+            actionsPool.Recycle(toRecycle);
         }
     }
 }

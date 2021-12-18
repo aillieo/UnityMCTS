@@ -35,9 +35,23 @@ namespace Sample
             try
             {
                 int ms = (int)Math.Round(maxPlanningSeconds * 1000);
-                Node<GoBangStateWrapper> node = tree.Run(ms);
-                GoBangStateWrapper gbsw = node.state;
-                tcs.SetResult(gbsw.goBangState.lastPlaced);
+                Task taskAll = Task.WhenAll(
+                    Task.Run(() => tree.Run(ms)),
+                    Task.Run(() => tree.Run(ms)),
+                    Task.Run(() => tree.Run(ms)),
+                    Task.Run(() => tree.Run(ms)));
+
+                if (taskAll.Exception != null)
+                {
+                    throw taskAll.Exception;
+                }
+
+                taskAll.ContinueWith(o =>
+                {
+                    Node<GoBangStateWrapper> node = tree.Run(1);
+                    GoBangStateWrapper gbsw = node.state;
+                    tcs.SetResult(gbsw.goBangState.lastPlaced);
+                });
             }
             catch (Exception e)
             {

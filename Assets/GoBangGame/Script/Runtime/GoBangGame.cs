@@ -15,8 +15,8 @@ namespace AillieoUtils.GoBang
 
     public class GoBangGame
     {
-        //public const int dimension = 15;
-        public const int dimension = 10;
+        public const int dimension = 15;
+        //public const int dimension = 10;
 
         private GoBangState current;
         private Dictionary<PlayerSide, Player> players = new Dictionary<PlayerSide, Player>();
