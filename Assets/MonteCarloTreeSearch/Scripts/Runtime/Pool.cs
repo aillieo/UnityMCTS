@@ -13,7 +13,7 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
         public Pool(int capacity)
         {
-            this.stack = new BlockingCollection<T>(capacity);
+            this.stack = new BlockingCollection<T>(new ConcurrentStack<T>(), capacity);
         }
 
         public T Get()
