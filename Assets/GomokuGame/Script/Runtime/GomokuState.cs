@@ -4,23 +4,23 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace AillieoUtils.GoBang
+namespace AillieoUtils.Gomoku
 {
-    public class GoBangState
+    public class GomokuState
     {
         public int step;
         public int lastPlaced = -1;
-        public readonly BoardValue[] boardState = new BoardValue[GoBangGame.dimension * GoBangGame.dimension];
+        public readonly BoardValue[] boardState = new BoardValue[GomokuGame.dimension * GomokuGame.dimension];
         public PlayerSide lastPlacedSide = PlayerSide.Black;
 
         public bool IsTerminal()
         {
-            if (!GoBangGame.ValidIndex(lastPlaced))
+            if (!GomokuGame.ValidIndex(lastPlaced))
             {
                 return false;
             }
 
-            Vector2Int lastPlacedPos = GoBangGame.IndexToPos(lastPlaced);
+            Vector2Int lastPlacedPos = GomokuGame.IndexToPos(lastPlaced);
             // horizontal
             int left = GetChainedCountByDir(lastPlacedPos, Vector2Int.left);
             if (left >= 4)
@@ -106,7 +106,7 @@ namespace AillieoUtils.GoBang
             while (true)
             {
                 pos = pos + dir;
-                if (!GoBangGame.ValidPos(pos.x, pos.y))
+                if (!GomokuGame.ValidPos(pos.x, pos.y))
                 {
                     break;
                 }
@@ -124,13 +124,13 @@ namespace AillieoUtils.GoBang
 
         public BoardValue Get(int x, int y)
         {
-            int index = GoBangGame.PosToIndex(x, y);
+            int index = GomokuGame.PosToIndex(x, y);
             return boardState[index];
         }
 
         public bool Set(int x, int y, BoardValue newValue)
         {
-            int index = GoBangGame.PosToIndex(x, y);
+            int index = GomokuGame.PosToIndex(x, y);
             if (boardState[index] != BoardValue.Empty)
             {
                 return false;

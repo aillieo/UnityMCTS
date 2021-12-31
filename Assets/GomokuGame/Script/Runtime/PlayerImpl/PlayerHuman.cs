@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace AillieoUtils.GoBang
+namespace AillieoUtils.Gomoku
 {
     public class PlayerHuman : Player
     {
@@ -38,7 +38,7 @@ namespace AillieoUtils.GoBang
                 Vector3 position = ray.GetPoint(enter);
                 int x = Mathf.RoundToInt(position.x);
                 int y = Mathf.RoundToInt(position.z);
-                return x + GoBangGame.dimension * y;
+                return x + GomokuGame.dimension * y;
             }
             else
             {
@@ -48,12 +48,12 @@ namespace AillieoUtils.GoBang
 
         private bool ValidClick(int index)
         {
-            if (index < 0 || index >= GoBangGame.dimension * GoBangGame.dimension)
+            if (index < 0 || index >= GomokuGame.dimension * GomokuGame.dimension)
             {
                 return false;
             }
 
-            GoBangState state = belongingGame.GetCurrentState();
+            GomokuState state = belongingGame.GetCurrentState();
             return state.boardState[index] == BoardValue.Empty;
         }
     }

@@ -1,4 +1,4 @@
-using AillieoUtils.GoBang;
+using AillieoUtils.Gomoku;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,11 +7,11 @@ namespace Sample
 {
     public class SampleCase : MonoBehaviour
     {
-        private GoBangGame game;
+        private GomokuGame game;
 
         private async void Start()
         {
-            game = new GoBangGame();
+            game = new GomokuGame();
 
             game.CreatePlayer<PlayerHuman>();
             game.CreatePlayer<PlayerAI>();

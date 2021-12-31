@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace AillieoUtils.GoBang
+namespace AillieoUtils.Gomoku
 {
     public class InputDispatcher : MonoBehaviour
     {

@@ -1,5 +1,5 @@
 using System;
-using AillieoUtils.GoBang;
+using AillieoUtils.Gomoku;
 using AillieoUtils.MonteCarloTreeSearch;
 using System.Collections;
 using System.Collections.Generic;
@@ -19,7 +19,7 @@ namespace Sample
         public override Task<int> Play()
         {
             TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
-            MonteCarloTree<GoBangStateWrapper> tree = MonteCarloTree<GoBangStateWrapper>.CreateTree(this, new GoBangStateWrapper(belongingGame.GetCurrentState()));
+            MonteCarloTree<GomokuStateWrapper> tree = MonteCarloTree<GomokuStateWrapper>.CreateTree(this, new GomokuStateWrapper(belongingGame.GetCurrentState()));
             try
             {
                 int ms = (int)Math.Round(maxPlanningSeconds * 1000);
@@ -34,9 +34,9 @@ namespace Sample
 
                 taskAll.ContinueWith(o =>
                 {
-                    Node<GoBangStateWrapper> node = tree.Run(1);
-                    GoBangStateWrapper gbsw = node.state;
-                    tcs.SetResult(gbsw.goBangState.lastPlaced);
+                    Node<GomokuStateWrapper> node = tree.Run(1);
+                    GomokuStateWrapper gbsw = node.state;
+                    tcs.SetResult(gbsw.gomokuState.lastPlaced);
                 });
             }
             catch (Exception e)
@@ -46,7 +46,7 @@ namespace Sample
             }
             finally
             {
-                MonteCarloTree<GoBangStateWrapper>.Recycle(tree);
+                MonteCarloTree<GomokuStateWrapper>.Recycle(tree);
             }
             return tcs.Task;
         }

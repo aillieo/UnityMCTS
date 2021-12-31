@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace AillieoUtils.GoBang
+namespace AillieoUtils.Gomoku
 {
     public enum BoardValue : byte
     {
@@ -13,12 +13,12 @@ namespace AillieoUtils.GoBang
         White
     }
 
-    public class GoBangGame
+    public class GomokuGame
     {
         public const int dimension = 15;
         //public const int dimension = 10;
 
-        private GoBangState current;
+        private GomokuState current;
         private Dictionary<PlayerSide, Player> players = new Dictionary<PlayerSide, Player>();
 
         public T CreatePlayer<T>() where T : Player
@@ -50,18 +50,18 @@ namespace AillieoUtils.GoBang
 
         public void Init()
         {
-            current = new GoBangState();
+            current = new GomokuState();
             current.lastPlacedSide = PlayerSide.White;
         }
 
-        public GoBangState GetCurrentState()
+        public GomokuState GetCurrentState()
         {
             return current;
         }
 
         public async Task<Player> Run()
         {
-            GoBangState state = GetCurrentState();
+            GomokuState state = GetCurrentState();
             while (!state.IsTerminal())
             {
                 state = await PlayerMove();
@@ -73,7 +73,7 @@ namespace AillieoUtils.GoBang
             return winner;
         }
 
-        public async Task<GoBangState> PlayerMove()
+        public async Task<GomokuState> PlayerMove()
         {
             PlayerSide curSide = Flip(current.lastPlacedSide);
             Player curPlayer = players[curSide];
@@ -113,22 +113,22 @@ namespace AillieoUtils.GoBang
 
         public void DrawGizmos()
         {
-            GoBangState state = GetCurrentState();
+            GomokuState state = GetCurrentState();
 
             if (state == null)
             {
                 return;
             }
 
-            Vector3 center = new Vector3(GoBangGame.dimension / 2, 0, GoBangGame.dimension / 2);
-            Vector3 size = new Vector3(GoBangGame.dimension, 1, GoBangGame.dimension);
+            Vector3 center = new Vector3(GomokuGame.dimension / 2, 0, GomokuGame.dimension / 2);
+            Vector3 size = new Vector3(GomokuGame.dimension, 1, GomokuGame.dimension);
             Gizmos.DrawWireCube(center, size);
 
-            for (int y = 0; y < GoBangGame.dimension; ++y)
+            for (int y = 0; y < GomokuGame.dimension; ++y)
             {
-                for (int x = 0; x < GoBangGame.dimension; ++x)
+                for (int x = 0; x < GomokuGame.dimension; ++x)
                 {
-                    BoardValue value = state.boardState[x + y * GoBangGame.dimension];
+                    BoardValue value = state.boardState[x + y * GomokuGame.dimension];
                     if (value != BoardValue.Empty)
                     {
                         DrawPiece(value, x, y);
@@ -179,19 +179,21 @@ namespace AillieoUtils.GoBang
 
         public static int PosToIndex(int x, int y)
         {
-            if (!ValidPos(x, y))
-            {
-                throw new IndexOutOfRangeException($"x={x},y={y}");
-            }
+            // 简化 提升性能
+            //if (!ValidPos(x, y))
+            //{
+            //    throw new IndexOutOfRangeException($"x={x},y={y}");
+            //}
             return x + y * dimension;
         }
 
         public static Vector2Int IndexToPos(int index)
         {
-            if (!ValidIndex(index))
-            {
-                throw new IndexOutOfRangeException($"index={index}");
-            }
+            // 简化 提升性能
+            //if (!ValidIndex(index))
+            //{
+            //    throw new IndexOutOfRangeException($"index={index}");
+            //}
             int x = index % dimension;
             int y = index / dimension;
             return new Vector2Int(x, y);

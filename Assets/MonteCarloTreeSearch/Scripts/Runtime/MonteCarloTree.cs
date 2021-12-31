@@ -27,17 +27,14 @@ namespace AillieoUtils.MonteCarloTreeSearch
 
         public static MonteCarloTree<T> CreateTree(IAgent agent, T state)
         {
-            Node<T> node = GetNode();
+            //Node<T> node = GetNode();
+            Node<T> node = new Node<T>();
             node.state.CopyFrom(state);
 
             return new MonteCarloTree<T>()
             {
                 agent = agent,
-                root = new Node<T>()
-                {
-                    state = state,
-                    depth = 0,
-                },
+                root = node,
             };
         }
 
@@ -187,6 +184,12 @@ namespace AillieoUtils.MonteCarloTreeSearch
             {
                 foreach (var s in node.state.Expand())
                 {
+                    //Node<T> newNode = nodePool.Get();
+                    //newNode.state = s;
+                    //newNode.parent = node;
+                    //newNode.depth = node.depth + 1;
+                    //node.children.Add(newNode);
+
                     node.children.Add(new Node<T>()
                     {
                         state = s,

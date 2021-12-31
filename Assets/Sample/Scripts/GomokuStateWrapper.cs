@@ -1,4 +1,4 @@
-using AillieoUtils.GoBang;
+using AillieoUtils.Gomoku;
 using AillieoUtils.MonteCarloTreeSearch;
 using System;
 using System.Collections;
@@ -8,43 +8,48 @@ using System.Text;
 
 namespace Sample
 {
-    public class GoBangStateWrapper : IState<GoBangStateWrapper>
+    public class GomokuStateWrapper : IState<GomokuStateWrapper>
     {
-        public GoBangState goBangState;
+        public GomokuState gomokuState;
         private Random rand = new Random();
 
         private int instanceId;
         private static int sid;
 
-        public GoBangStateWrapper(GoBangState goBangState)
+        public GomokuStateWrapper(GomokuState gomokuState)
         {
-            this.goBangState = goBangState;
+            this.gomokuState = gomokuState;
             this.instanceId = sid++;
         }
 
-        public GoBangStateWrapper()
-            : this(new GoBangState())
+        public GomokuStateWrapper()
+            : this(new GomokuState())
         {
         }
 
-        public IEnumerable<GoBangStateWrapper> Expand()
+        public IEnumerable<GomokuStateWrapper> Expand()
         {
             //UnityEngine.Debug.Log($"Expand from:\n{this}");
 
             HashSet<int> cachedActions = StatePool.GetActionSet();
-            for (int x = 0; x < GoBangGame.dimension; ++x)
+            for (int x = 0; x < GomokuGame.dimension; ++x)
             {
-                for (int y = 0; y < GoBangGame.dimension; ++y)
+                for (int y = 0; y < GomokuGame.dimension; ++y)
                 {
-                    if (goBangState.Get(x, y) != BoardValue.Empty)
+                    if (gomokuState.Get(x, y) != BoardValue.Empty)
                     {
                         for (int i = x - 1; i <= x + 1; ++i)
                         {
                             for (int j = y - 1; j <= y + 1; ++j)
                             {
-                                if (GoBangGame.ValidPos(i, j) && goBangState.Get(i, j) == BoardValue.Empty)
+                                if (i == x && j == y)
                                 {
-                                    int action = GoBangGame.PosToIndex(i, j);
+                                    continue;
+                                }
+
+                                if (GomokuGame.ValidPos(i, j) && gomokuState.Get(i, j) == BoardValue.Empty)
+                                {
+                                    int action = GomokuGame.PosToIndex(i, j);
                                     if (cachedActions.Add(action))
                                     {
                                         // 相邻位置 优先考虑落子
@@ -54,14 +59,16 @@ namespace Sample
                             }
                         }
                     }
-
-                    // 其它位置 随机考虑落子
-                    if (rand.NextDouble() > 0.99 && goBangState.Get(x, y) == BoardValue.Empty)
+                    else
                     {
-                        int action = GoBangGame.PosToIndex(x, y);
-                        if (cachedActions.Add(action))
+                        // 其它位置 随机考虑落子
+                        if (rand.NextDouble() > 0.99 /*&& gomokuState.Get(x, y) == BoardValue.Empty*/)
                         {
-                            yield return ApplyAction(this, action);
+                            int action = GomokuGame.PosToIndex(x, y);
+                            if (cachedActions.Add(action))
+                            {
+                                yield return ApplyAction(this, action);
+                            }
                         }
                     }
                 }
@@ -70,27 +77,27 @@ namespace Sample
             StatePool.RecycleActionSet(cachedActions);
         }
 
-        public static GoBangStateWrapper ApplyAction(GoBangStateWrapper initial, int action)
+        public static GomokuStateWrapper ApplyAction(GomokuStateWrapper initial, int action)
         {
-            GoBangStateWrapper newState = StatePool.GetState();
+            GomokuStateWrapper newState = StatePool.GetState();
             newState.CopyFrom(initial);
-            PlayerSide curSide = GoBangGame.Flip(newState.goBangState.lastPlacedSide);
-            UnityEngine.Vector2Int pos = GoBangGame.IndexToPos(action);
-            newState.goBangState.Set(pos.x, pos.y, GoBangGame.PlayerSideToBoardValue(curSide));
-            newState.goBangState.lastPlaced = action;
-            newState.goBangState.lastPlacedSide = curSide;
-            newState.goBangState.step++;
+            PlayerSide curSide = GomokuGame.Flip(newState.gomokuState.lastPlacedSide);
+            UnityEngine.Vector2Int pos = GomokuGame.IndexToPos(action);
+            newState.gomokuState.Set(pos.x, pos.y, GomokuGame.PlayerSideToBoardValue(curSide));
+            newState.gomokuState.lastPlaced = action;
+            newState.gomokuState.lastPlacedSide = curSide;
+            newState.gomokuState.step++;
             return newState;
         }
 
         public bool IsTerminal()
         {
-            return goBangState.IsTerminal();
+            return gomokuState.IsTerminal();
         }
 
         public float Simulate(IAgent agent)
         {
-            GoBangStateWrapper cachedInitial = StatePool.GetState();
+            GomokuStateWrapper cachedInitial = StatePool.GetState();
             cachedInitial.CopyFrom(this);
 
             int simuTime = 1000;
@@ -105,7 +112,7 @@ namespace Sample
                     return 0.5f;
                 }
 
-                List<GoBangStateWrapper> expansion = StatePool.GetStateList();
+                List<GomokuStateWrapper> expansion = StatePool.GetStateList();
                 expansion.AddRange(cachedInitial.Expand());
                 int count = expansion.Count;
                 if (count == 0)
@@ -114,7 +121,7 @@ namespace Sample
                     throw new InvalidOperationException();
                 }
 
-                GoBangStateWrapper randState = expansion[this.rand.Next(0, count)];
+                GomokuStateWrapper randState = expansion[this.rand.Next(0, count)];
                 cachedInitial.CopyFrom(randState);
 
                 foreach (var s in expansion)
@@ -125,13 +132,13 @@ namespace Sample
                 StatePool.RecycleStateList(expansion);
             }
 
-            if (!GoBangGame.ValidIndex(cachedInitial.goBangState.lastPlaced))
+            if (!GomokuGame.ValidIndex(cachedInitial.gomokuState.lastPlaced))
             {
                 // draw
                 return 0.5f;
             }
 
-            if (cachedInitial.goBangState.lastPlacedSide == selfSide)
+            if (cachedInitial.gomokuState.lastPlacedSide == selfSide)
             {
                 // win
                 return 1f;
@@ -146,13 +153,13 @@ namespace Sample
         public override string ToString()
         {
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.Append($"({instanceId}) lp={GoBangGame.IndexToPos(goBangState.lastPlaced)} ls={goBangState.lastPlacedSide}");
+            stringBuilder.Append($"({instanceId}) lp={GomokuGame.IndexToPos(gomokuState.lastPlaced)} ls={gomokuState.lastPlacedSide}");
             stringBuilder.AppendLine();
-            for (int i = GoBangGame.dimension - 1; i >= 0; --i)
+            for (int i = GomokuGame.dimension - 1; i >= 0; --i)
             {
-                for (int j = 0; j < GoBangGame.dimension; ++j)
+                for (int j = 0; j < GomokuGame.dimension; ++j)
                 {
-                    switch (goBangState.Get(j, i))
+                    switch (gomokuState.Get(j, i))
                     {
                         case BoardValue.Empty:
                             stringBuilder.Append('_');
@@ -175,12 +182,12 @@ namespace Sample
             return stringBuilder.ToString();
         }
 
-        public void CopyFrom(GoBangStateWrapper src)
+        public void CopyFrom(GomokuStateWrapper src)
         {
-            Array.Copy(src.goBangState.boardState, goBangState.boardState, goBangState.boardState.Length);
-            goBangState.lastPlacedSide = src.goBangState.lastPlacedSide;
-            goBangState.lastPlaced = src.goBangState.lastPlaced;
-            goBangState.step = src.goBangState.step;
+            Array.Copy(src.gomokuState.boardState, gomokuState.boardState, gomokuState.boardState.Length);
+            gomokuState.lastPlacedSide = src.gomokuState.lastPlacedSide;
+            gomokuState.lastPlaced = src.gomokuState.lastPlaced;
+            gomokuState.step = src.gomokuState.step;
         }
 
         public void Reset()
